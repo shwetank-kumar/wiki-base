@@ -97,6 +97,7 @@ def get_model_size(model):
     total_params = sum(p.numel() for p in model.parameters())
     return total_params
 
+##TODO: 3. Keep the data in the file but read the file at different locations to create batches and tokenize them. So you dont have to read everything into the memory at the same time
 ##TODO: 4. Separate tokenizer class so you dont need to pass dataset to decode
 ##TODO: 5. Maybe start plotting using Bokeh or Altair
 ##TODO: 6. Utilities to save model checkpoints during training
