@@ -3,6 +3,48 @@ import torch
 from torch.utils.data import Dataset
 from torch.nn import functional as F
 
+def create_dataset(input_path):
+    """Read data from input_path""" 
+    with open(input_path, 'r', encoding='utf-8') as f:
+        words = f.read()
+    # words = data.splitlines()
+    # words = [w.strip() for w in words] # get rid of any leading or trailing white space
+    # words = [w for w in words if w] # get rid of any empty strings
+    vocab = sorted(list(set(''.join(words))))
+    max_length = max(len(w) for w in words)
+    return words, vocab, max_length
+
+class CharDataset(Dataset):
+    def __init__(self, words, vocab, max_length) -> None:
+        
+        self.words = words
+        self.vocab = vocab
+        self.max_length = max_length
+        self.stoi = {s: i+1 for i,s in enumerate(vocab)}
+        self.itos = {s: i for i,s in self.stoi.items()}
+
+    def __len__(self):
+        return len(self.words)
+
+    def encode(self, words): 
+        print(words)
+        return torch.tensor([self.stoi[w] for w in words], dtype = torch.long)
+    
+    def decode(self, tokens): 
+        return ''.join(self.itos[t] for t in tokens)
+    
+    ## This function makes sense for a series of names. Requires an update for chunks inside a piece of text
+    # def __getitem__(self, idx):
+    #     word = self.words[idx]
+    #     x = torch.zeros(self.max_length+1, dtype=torch.long)
+    #     y = torch.zeros(self.max_length+1, dtype=torch.long)
+    #     ix = self.encode(word)
+    #     x[1:1+len(ix)] = ix
+    #     y[:len(ix)] = ix
+    #     y[len(ix)+1:] = -1
+    #     return x, y
+
+
 @torch.inference_mode()
 def evaluate_loss(model, tr_loader, te_loader, device, num_batches = 10):
     model.eval()
