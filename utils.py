@@ -21,48 +21,26 @@ def get_batch(dataset, device, block_size=256, batch_size=64):
 
     return x.to(device), y.to(device)
 
-@torch.no_grad()
-def estimate_loss(model, block_size, batch_size, train_data, val_data, device, eval_iters):
-    data = {'train': train_data, 'val': val_data}
-    out = {}
-    model.eval()
-    for split in ['train', 'val']:
-        losses = torch.zeros(eval_iters)
-        for k in range(eval_iters):
-            X, Y = get_batch(data[split], device, block_size, batch_size)
-            logits, loss = model(X, Y)
-            losses[k] = loss.item()
-        out[split] = losses.mean()
-    model.train()
-    return out
-
-
 @torch.inference_mode()
-def evaluate_loss_char_ds(model, tr_ds, te_ds, num_batches = 10):
+def evaluate_loss(model, eval_batch, num_batches = 8):
     model.eval()
     loss_tr = []
-    loss_te = []
+    loss_vl = []
     for n in range(num_batches):
-        Xtr, Ytr = next(iter(tr_ds))
-        Xte, Yte = next(iter(te_ds))
-        # Xtr = Xtr.to(device)
-        # Ytr = Ytr.to(device)
-        # Xte = Xte.to(device)
-        # Yte = Yte.to(device)
-        # print(Xtr.shape, Ytr.shape, Xte.shape, Yte.shape)
-        _, train_loss = model(Xtr, Ytr)
-        _, test_loss = model(Xte, Yte)
+        xtr, ytr = eval_batch['train']
+        xval, yval = eval_batch['validation']
+        _, train_loss = model(xtr, ytr)
+        _, val_loss = model(xval, yval)
         loss_tr.append(train_loss)
-        loss_te.append(test_loss)
+        loss_vl.append(val_loss)
     
     mean_train_loss = torch.tensor(loss_tr).mean().item()
-    mean_test_loss = torch.tensor(loss_te).mean().item()
+    mean_val_loss = torch.tensor(loss_vl).mean().item()
     model.train()
-    return(mean_train_loss, mean_test_loss)
-
+    return mean_train_loss, mean_val_loss
 
 @torch.no_grad()
-def _generate(model, idx, max_new_tokens, device, block_size=16):
+def generate(model, idx, max_new_tokens, device, block_size=16):
     """Generates a single batch of names based on since of idx matrix. Accessed via print_samples"""
     for _ in range(max_new_tokens):
         # print('idx shape:',idx.shape)
@@ -80,16 +58,17 @@ def _generate(model, idx, max_new_tokens, device, block_size=16):
         idx = torch.cat((idx, idx_next), dim=1)
     return idx
 
-def print_samples(model, train_data, max_new_tokens, device, num=10):
+def print_samples(model, tokenizer, seed_text, max_new_tokens, device):
     """ samples from the model and pretty prints the decoded samples """
-    X_init = torch.zeros((num, 1), dtype=torch.long).to(device)
-    X_samp = _generate(model, X_init, max_new_tokens, device)[:,1:].tolist()
+    # X_init = torch.zeros((num, 1), dtype=torch.long).to(device)
+    seed_tokens = torch.tensor(tokenizer.encode(seed_text), dtype=torch.long).to(device)
+    X_samp = generate(model, seed_tokens, max_new_tokens, device)[:,1:].tolist()
     # print(X_samp)
     for row in X_samp:
         crop_index = row.index(0) if 0 in row else len(row)
         # print(row, crop_index)
         row = row[:crop_index]
-        print(train_data.decode(row))
+        print(tokenizer.decode(row))
 
 def get_lr_loss(model, optimizer, dataset, num_epochs, device, block_size, batch_size, lr_start_exp=-3, lr_end_exp=0.5):
 
