@@ -57,6 +57,6 @@ if __name__ == '__main__':
         tokens[s] = list(chain.from_iterable(tokenized_dataset[s]['input_ids']))
 
 
-    # Save tokens and tokenized dataset object to a .bin file
+    # Save tokens and tokenized dataset object to a .bin file (raw_tokens:dict, tokens: Dataset)
     with open(tokens_path, "wb") as f:
-        pickle.dump((tokens, tokenized_dataset), f)
+        pickle.dump((vocab_size, tokens, tokenized_dataset), f)
