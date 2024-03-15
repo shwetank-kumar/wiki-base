@@ -4,9 +4,17 @@
 # Import the W&B Python Library
 import wandb
 
-# 1. Start a W&B Run
+# Start a W&B Run
 run = wandb.init(
     project="train-gpt",
     notes="Futzing around",
 )
 
+wandb.config = {
+    "block_size": 128,
+    "batch_size": 32,
+    "emb_dim": 64,
+    "num_layers": 4,
+    "num_heads": 16,
+    "dropout": 0.2
+}
