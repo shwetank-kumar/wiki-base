@@ -2,18 +2,19 @@ import os
 from datasets import load_dataset
 from transformers import AutoTokenizer
 from itertools import chain
+import numpy as np
 import pickle
 
 """
 Prepare the data for feeding into training.
 1. Fine tune a standard tokenizer
 2. Tokenize the dataset
-3. Store tuple dataset (raw_tokens_list for each split, tokenized dataset HF object) in .bin files
+3. Store dataset of uint16 np array
 """
 
 ## Tokenizer path
-tokenizer_path = "./wiki2tokenizer"
-tokens_path = "./wiki2tokens.bin"
+tokenizer_path = os.path.join(os.path.dirname(__file__),"./wiki2tokenizer")
+dataset_dir = os.path.dirname(__file__)
 
 ## Get data
 dataset = load_dataset("wikitext", name="wikitext-2-raw-v1")
@@ -37,10 +38,6 @@ def tune_tokenizer():
     tokenizer = gpt2_tokenizer.train_new_from_iterator(batch_iterator(splits), vocab_size=25000)
     return tokenizer
 
-def tokenize(example):
-    tokenized_dataset = tokenizer(example)
-    return tokenized_dataset
-
 if __name__ == '__main__':
     if not os.path.exists(tokenizer_path):
         tokenizer = tune_tokenizer()
@@ -48,15 +45,19 @@ if __name__ == '__main__':
 
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
     
-    tokenized_dataset = dataset.map(lambda example: tokenize(example['text']), 
+    tokenized_dataset = dataset.map(lambda example: tokenizer(example['text']), 
                           batched=True,
                           desc="Tokenizing the splits",
                           num_proc=num_proc,)
     tokens = {}
     for s in tokenized_dataset:
-        tokens[s] = list(chain.from_iterable(tokenized_dataset[s]['input_ids']))
+        tokens[s] = np.array(list(chain.from_iterable(tokenized_dataset[s]['input_ids'])), dtype=np.uint16)
 
 
-    # Save tokens and tokenized dataset object to a .bin file (raw_tokens:dict, tokens: Dataset)
-    with open(tokens_path, "wb") as f:
-        pickle.dump((vocab_size, tokens, tokenized_dataset), f)
+    # export to bin files
+    tokens["train"].tofile(os.path.join(dataset_dir, 'train.bin'))
+    tokens["validation"].tofile(os.path.join(dataset_dir, 'val.bin'))
+    tokens["test"].tofile(os.path.join(dataset_dir, 'test.bin'))
+    with open(os.path.join(dataset_dir, 'meta.pkl'), "wb") as f:
+        pickle.dump({"vocab_size": vocab_size}, f)
+    
