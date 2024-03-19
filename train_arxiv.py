@@ -1,3 +1,7 @@
+##TODO: Add multiGPU support in same node
+##TODO: Add multiGPU support in differnt nodes
+
+# Import the W&B Python Library
 import torch
 import os
 import wandb
@@ -25,8 +29,42 @@ else:
 
 print("Device selected:", device)
 
+# # Start a W&B Run
+# run = wandb.init(
+#     project="wiki2",
+#     notes="Futzing around",
+# )
+
+# wandb.config = {
+#     "block_size": 128,
+#     "batch_size": 32,
+#     "emb_dim": 64,
+#     "num_layers": 4,
+#     "num_heads": 16,
+#     "dropout": 0.2,
+# }
+
+## Network params
+block_size = 128
+batch_size = 32
+emb_dim = 64
+num_layers = 4
+num_heads = 16
+dropout = 0.2
+
+## Training params
+lr = 0.001
+warmup_epochs = 5
+n_epochs = 100  # Adjust this according to your training duration
+
+## Evaluation parameters
+n_eval = 32
+print_frequency = 10
+
 # File paths
 dataset_path = "./data/wiki2/wiki2tokens.bin"
+tokenizer_path = "./data/wiki2/wiki2tokenizer"
+
 
 def get_batch(dataset, device, block_size=256, batch_size=64):
     idx = torch.randint(len(dataset) - block_size, (batch_size, ))
@@ -34,11 +72,8 @@ def get_batch(dataset, device, block_size=256, batch_size=64):
     y = torch.tensor([dataset[i+1:i+block_size+1] for i in idx], dtype=torch.long)
     return x.to(device), y.to(device)
 
+
 if __name__ == "__main__":
-    # Initialize distributed backend
-    torch.distributed.init_process_group(backend='nccl', init_method='env://')
-    world_size = torch.distributed.get_world_size()
-    rank = torch.distributed.get_rank()
 
     ## Load tokenized datasets
     with open(dataset_path, "rb") as f:
@@ -46,12 +81,19 @@ if __name__ == "__main__":
 
     # Unpack the tuple of objects
     vocab_size, tokenized_text, tokens_dataset = loaded_objects
+    tokenized_text.keys()
 
-    # Initialize model and optimizer
+    # Import model and run a single pass 
+    xb, yb =  get_batch(tokenized_text['train'], device, block_size, batch_size)
     model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout).to(device)
-    model = DDP(model, device_ids=[rank])
-
     optimizer = Adam(model.parameters(), lr=lr)
+    logits, loss = model(xb,yb)
+    xb.shape, yb.shape
+    print('Measured loss:', loss.item())
+    print('Expected loss:', -math.log(1./vocab_size))
+    # Setting validation loss to a theoretical value from a uniform distirbution
+    low_val_loss = -math.log(1./vocab_size)
+
     
     # Create a learning rate scheduler for the run
     scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=n_epochs - warmup_epochs, T_mult=1, eta_min=0)
@@ -62,27 +104,23 @@ if __name__ == "__main__":
     for epoch in range(n_epochs):
         # Adjust learning rate using scheduler
         scheduler.step(epoch)
-
-        # Get batch for training and validation
         xtr, ytr = get_batch(tokenized_text['train'], device, block_size, batch_size)
         xval, yval = get_batch(tokenized_text['validation'], device, block_size, batch_size)
-        
-        # Forward pass
-        logits, loss = model(xtr, ytr)
-        
-        # Backward pass and optimization
+        eval_dataset = {'train': (xtr,ytr), 'validation': (xval, yval)}
+        logits, loss = model(xtr,ytr)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
-        
-        # Evaluate loss
-        tr_lossi, val_lossi = evaluate_loss(model, {'train': (xtr, ytr), 'validation': (xval, yval)}, num_batches=n_eval)
+        tr_lossi, val_lossi = evaluate_loss(model, eval_dataset, num_batches=n_eval)
         losses["train"].append(tr_lossi)
         losses["validation"].append(val_lossi)
         
+    
+
         ## Print losses
         if epoch % print_frequency == 0:
             print(epoch, ' --> train loss: ', tr_lossi, 'validation loss: ', val_lossi)
 
-    # Clean up
-    torch.distributed.destroy_process_group()
+##TODO: Save parameters every run every N runs
+##TODO: Restart from the checkpoint
+##TODO: Read directly from disk 
