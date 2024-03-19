@@ -58,10 +58,13 @@ def get_batch(dataset, device, block_size=256, batch_size=64):
     return x.to(device), y.to(device)
 
 if __name__ == "__main__":
-    # Initialize distributed backend
-    torch.distributed.init_process_group(backend='nccl', init_method='env://')
-    world_size = torch.distributed.get_world_size()
-    rank = torch.distributed.get_rank()
+
+    ddp = int(os.environ.get('RANK', -1)) != -1 # is this a ddp run?
+    if ddp:
+        # Initialize distributed backend
+        torch.distributed.init_process_group(backend='nccl', init_method='env://')
+        world_size = torch.distributed.get_world_size()
+        rank = torch.distributed.get_rank()
 
     ## Load tokenized datasets
     with open(dataset_path, "rb") as f:
@@ -72,7 +75,9 @@ if __name__ == "__main__":
 
     # Initialize model and optimizer
     model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout).to(device)
-    model = DDP(model, device_ids=[rank])
+    # wrap model into DDP container
+    if ddp:
+        model = DDP(model, device_ids=[rank])
 
     optimizer = Adam(model.parameters(), lr=lr)
     
