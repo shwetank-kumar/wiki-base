@@ -5,7 +5,7 @@
 import torch
 import os
 import wandb
-from models import Xformer_Scratch as Xformer
+from models.llm import Xformer_Scratch as Xformer
 from torch.optim import Adam
 import math
 import pickle
