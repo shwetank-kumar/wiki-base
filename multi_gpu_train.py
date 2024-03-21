@@ -20,13 +20,15 @@ def ddp_setup(rank, world_size):
         rank: Unique identifier of each process
         world_size: Total number of processes
     """
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12355"
-    init_process_group(backend="nccl", rank=rank, world_size=world_size)
-    torch.cuda.set_device(rank)
+    # os.environ["MASTER_ADDR"] = "localhost"
+    # os.environ["MASTER_PORT"] = "12355"
+    ddp = int(os.environ.get('RANK', -1)) != -1
+    if ddp:
+        init_process_group(backend="nccl", init_method='env://')#rank=rank, world_size=world_size)
+        world_size = torch.distributed.get_world_size()
+        rank = torch.distributed.get_rank()
 
 def load_train_objs():
-
     with open(dataset_file, "rb") as f:
             loaded_objects = pickle.load(f)
 
@@ -34,8 +36,9 @@ def load_train_objs():
     vocab_size, tokenized_text, _ = loaded_objects
     
     if os.path.exists(checkpoint_path):
+        print('Yes checkpoint')
         # Load model from checkpoint
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+        checkpoint = torch.load(checkpoint_path)
         model_state_dict = checkpoint['model_state_dict']
         
         # Initialize model
@@ -45,6 +48,7 @@ def load_train_objs():
         model.load_state_dict(model_state_dict)
     else:
         # If checkpoint does not exist, initialize new model
+        print('No checkpoint')
         model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
 
     dataset = tokenized_text
@@ -147,9 +151,18 @@ class Trainer:
                     self._save_checkpoint(epoch)
 
 def main(device, total_epochs, save_every, batch_size, world_size: int = None, rank: int = None):
-    print(rank, world_size)
     if rank is not None and world_size is not None:
+        print('setup ddp')
         ddp_setup(rank, world_size)
+    else:
+        print('did not setup ddp')
+
+    print("device:", device,
+          "total epochs:", total_epochs, 
+          "save_every:", save_every, 
+          "batch_size:", batch_size, 
+          "world_size:", world_size, 
+          "rank:", rank)
     dataset, model, optimizer = load_train_objs()
     trainer = Trainer(model, dataset, optimizer, save_every, batch_size, device)
     trainer.train(total_epochs)
@@ -168,8 +181,8 @@ if __name__ == "__main__":
     # Check if CUDA is available
     if torch.cuda.is_available():
         device = torch.device("cuda")
-        print(device)
         world_size = torch.cuda.device_count()
+        print(device, args.total_epochs, args.save_every, args.batch_size, world_size)
         mp.spawn(main, args=(device, args.total_epochs, args.save_every, args.batch_size, world_size), nprocs=world_size)
     else:
         # Check if MPS is available
