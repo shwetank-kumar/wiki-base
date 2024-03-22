@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 class Wiki2Dataset(Dataset):
     def __init__(self, dataset, block_size):
@@ -14,25 +14,18 @@ class Wiki2Dataset(Dataset):
         y = torch.tensor(self.dataset[idx+1:idx+self.block_size+1], dtype=torch.long)
         return x, y
 
-class Wiki2Dataloader:
-    def __init__(self, dataset, batch_size, block_size, device):
-        self.dataset = dataset
-        self.batch_size = batch_size
-        self.block_size = block_size
-        self.device = device
+
+class Wiki2Dataloader(DataLoader):
+    def __init__(self, dataset, batch_size, block_size, *args, **kwargs):
+       super().__init__(dataset, batch_size=batch_size, *args, **kwargs)
+       self.block_size = block_size
+
 
     def __iter__(self):
-        num_batches = len(self.dataset) // self.batch_size
-        for batch_idx in range(num_batches):
-            start_idx = batch_idx * self.batch_size
-            end_idx = (batch_idx + 1) * self.batch_size
-            batch_data = [self.dataset[idx] for idx in range(start_idx, end_idx)]
-            x_batch = torch.stack([x for x, _ in batch_data]).to(self.device)
-            y_batch = torch.stack([y for _, y in batch_data]).to(self.device)
-            yield x_batch, y_batch
-
-    def __len__(self):
-        return len(self.dataset) // self.batch_size
+        idx = torch.randint(len(self.dataset) - self.block_size, (len(self.dataset) // self.batch_size,))
+        for i in idx:
+            x, y = self.dataset[i]
+            yield x, y
 
 
 # Example usage:
