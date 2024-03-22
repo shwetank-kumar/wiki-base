@@ -1,5 +1,5 @@
 ##TODO: Read directly from disk - Convert this to a file for train, validation and metadata
-##TODO: Add DDP support for multi GPU
+##TODO: Add DDP support for multi GPU using accelerate - makesure to calculate loss on the main process only
 ##TODO: Add a scheduler for annealing of learning rate
 ##TODO: Ability to overwrite any argument from the command line
 ##TODO: Activate pin memory and shuffle
@@ -22,10 +22,6 @@ def load_train_objs():
     vocab_size, tokenized_text, _ = loaded_objects
     
     if os.listdir(checkpoint_dir):
-        # Load model from checkpoint
-        # checkpoint = torch.load(checkpoint_path)
-        # model_state_dict = checkpoint['model_state_dict']
-        
         # Initialize model
         model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
         # Load model state dict
@@ -113,11 +109,7 @@ class Trainer:
         if epoch % self.save_every == 0:
             print('Epoch: ', epoch, ' | Train loss: ', tr_lossi, '| Validation loss: ', val_lossi)
 
-    def _save_checkpoint(self, epoch):
-        # ckp = self.model.state_dict()
-        # checkpoint = {'model_state_dict': ckp}
-        # PATH = checkpoint_path
-        # torch.save(checkpoint, PATH)
+    def _save_checkpoint(self):
         print(f"Training checkpoint saved at {checkpoint_dir}")
         # Unwrap
         model = accelerator.unwrap_model(self.model)
@@ -147,10 +139,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='simple distributed training job')
     parser.add_argument('total_epochs', type=int, help='Total epochs to train the model')
     parser.add_argument('save_every', type=int, help='How often to save a snapshot')
-    parser.add_argument('--batch_size', default=32, type=int, help='Input batch size on each device (default: 32)')
+    # parser.add_argument('--batch_size', default=32, type=int, help='Input batch size on each device (default: 32)')
     args = parser.parse_args()
 
     accelerator = Accelerator()
     device = accelerator.device
     print("Device type being used by Hugging Face Accelerate:", device)
-    main(args.total_epochs, args.save_every, args.batch_size)
+    main(args.total_epochs, args.save_every, batch_size)

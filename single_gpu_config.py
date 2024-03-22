@@ -8,11 +8,11 @@ model_weight_file = "weights.pkl"
 
 
 ## Network params
-block_size = 128
-# batch_size = 32
-emb_dim = 64
-num_layers = 4
-num_heads = 16
+block_size = 512
+batch_size = 64
+emb_dim = 128
+num_layers = 8
+num_heads = 8
 dropout = 0.2
 
 ## Training parameters 
