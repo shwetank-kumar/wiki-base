@@ -9,7 +9,7 @@ model_weight_file = "weights.pkl"
 
 ## Network params
 block_size = 512
-batch_size = 64
+batch_size = 32
 emb_dim = 128
 num_layers = 8
 num_heads = 8

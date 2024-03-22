@@ -27,7 +27,7 @@ def load_train_objs():
         # Initialize model
         model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
         # Load model state dict
-        modelwgts = torch.load(os.path.join(checkpoint_dir, model_weight_file))
+        modelwgts = torch.load(os.path.join(checkpoint_dir, model_weight_file), map_location=torch.device(accelerator.device.type))
         # print(modelwgts)
         model.load_state_dict(modelwgts)
 
