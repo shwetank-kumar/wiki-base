@@ -3,7 +3,7 @@
 ## File locations
 dataset_file = "./data/wiki2/wiki2tokens.bin"
 tokenizer_path = "./data/wiki2/wiki2tokenizer"                
-checkpoint_path = "./models/wiki2/checkpoint.pt"
+checkpoint_path = "./models/checkpoints/wiki2_checkpoint.pt"
 
 ## Network params
 block_size = 128

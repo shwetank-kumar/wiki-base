@@ -5,7 +5,7 @@
 import pickle
 import torch
 import os
-from models.llm import Xformer_Scratch as Xformer
+from models.wiki2 import Xformer_Scratch as Xformer
 from torch.optim import Adam
 from single_gpu_config import *
 

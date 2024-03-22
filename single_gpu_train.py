@@ -5,9 +5,12 @@
 import pickle
 import torch
 import os
-from models.llm import Xformer_Scratch as Xformer
+from models.wiki2 import Xformer_Scratch as Xformer
 from torch.optim import Adam
 from single_gpu_config import *
+from wikiloader import Wiki2Dataset, Wiki2Dataloader
+from torch.utils.data import Dataset
+import sys
 
 def load_train_objs():
 
@@ -31,16 +34,30 @@ def load_train_objs():
         # If checkpoint does not exist, initialize new model
         model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout).to(device)
 
-    dataset = tokenized_text
+    # dataset = tokenized_text
+    train_dataset = Wiki2Dataset(tokenized_text['train'], block_size)
+    val_dataset = Wiki2Dataset(tokenized_text['validation'], block_size)
     optimizer = Adam(model.parameters(), lr=lr)
-    return dataset, model, optimizer
+    return train_dataset, val_dataset, model, optimizer
 
+def prepare_dataloader(dataset: Dataset, batch_size: int):
+    return Wiki2Dataloader(
+        dataset,
+        batch_size=batch_size,
+        block_size=block_size,
+        device=device,
+        # pin_memory=True,
+        # shuffle=True
+    )
 
 
 class Trainer:
     def __init__(self, 
                  model: torch.nn.Module,
-                 dataset: dict[str, tuple[torch.Tensor, torch.Tensor]],
+                #  train_dataloader: DataLoader,
+                #  val_dataloader: DataLoader,
+                 train_dataloader,
+                 val_dataloader,
                  optimizer: torch.optim.Optimizer,
                  device: str,
                  save_every: int,
@@ -50,15 +67,16 @@ class Trainer:
         self.save_every = save_every
         # self.scheduler = scheduler
         self.optimizer = optimizer
-        self.model = model
-        self.dataset = dataset
+        self.model = model.to(device)
+        self.train_dataloader = train_dataloader
+        self.val_dataloader = val_dataloader
         self.batch_size = batch_size
 
-    def _get_batch(self, dataset, block_size=256):
-        idx = torch.randint(len(dataset) - block_size, (self.batch_size, ))
-        x = torch.tensor([dataset[i:i+block_size] for i in idx], dtype=torch.long)
-        y = torch.tensor([dataset[i+1:i+block_size+1] for i in idx], dtype=torch.long)
-        return x.to(self.device), y.to(self.device)
+    # def _get_batch(self, dataset, block_size=256):
+    #     idx = torch.randint(len(dataset) - block_size, (self.batch_size, ))
+    #     x = torch.tensor([dataset[i:i+block_size] for i in idx], dtype=torch.long)
+    #     y = torch.tensor([dataset[i+1:i+block_size+1] for i in idx], dtype=torch.long)
+    #     return x.to(self.device), y.to(self.device)
     
     @torch.inference_mode()
     def _evaluate_loss(self, eval_batch, num_batches = 8):
@@ -89,24 +107,28 @@ class Trainer:
     def _run_epoch(self, epoch):
         losses = {"train": [], "validation": []}
         ## Main training loop
-        xtr, ytr = self._get_batch(self.dataset['train'], block_size)
-        xval, yval = self._get_batch(self.dataset['validation'], block_size)
+        # xtr, ytr = self._get_batch(self.dataset['train'], block_size)
+        # xval, yval = self._get_batch(self.dataset['validation'], block_size)
+        
+        xtr, ytr = next(iter(self.train_dataloader))
         self._run_batch(xtr, ytr)
+        xval, yval = next(iter(self.val_dataloader))
 
+        
         ## Evaluate the losses and print
         tr_lossi, val_lossi = self._evaluate_loss({'train': (xtr, ytr), 'validation': (xval, yval)}, num_batches=eval_batch_size)
         losses["train"].append(tr_lossi)
         losses["validation"].append(val_lossi)
         ## Print losses
         if epoch % self.save_every == 0:
-            print(epoch, ' --> train loss: ', tr_lossi, 'validation loss: ', val_lossi)
+            print('Epoch: ', epoch, ' | Train loss: ', tr_lossi, '| Validation loss: ', val_lossi)
 
     def _save_checkpoint(self, epoch):
         ckp = self.model.state_dict()
         checkpoint = {'model_state_dict': ckp}
         PATH = checkpoint_path
         torch.save(checkpoint, PATH)
-        print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
+        print(f"Training checkpoint saved at {PATH}")
 
     def train(self, max_epochs: int):
         for epoch in range(max_epochs):
@@ -115,8 +137,11 @@ class Trainer:
                 self._save_checkpoint(epoch)
 
 def main(device, total_epochs, save_every, batch_size):
-    dataset, model, optimizer = load_train_objs()
-    trainer = Trainer(model, dataset, optimizer, device, save_every, batch_size)
+    train_dataset, val_dataset, model, optimizer = load_train_objs()
+    # trainer = Trainer(model, dataset, optimizer, device, save_every, batch_size)
+    train_dataloader = prepare_dataloader(train_dataset, batch_size)
+    val_dataloader = prepare_dataloader(val_dataset, batch_size)
+    trainer = Trainer(model, train_dataloader, val_dataloader, optimizer, device, save_every, batch_size)
     trainer.train(total_epochs)
 
 if __name__ == "__main__":
