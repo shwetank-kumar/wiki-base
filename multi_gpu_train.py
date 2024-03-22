@@ -21,16 +21,18 @@ def load_train_objs():
     # Unpack the tuple of objects
     vocab_size, tokenized_text, _ = loaded_objects
     
-    if os.path.exists(checkpoint_path):
+    if os.listdir(checkpoint_dir):
         # Load model from checkpoint
-        checkpoint = torch.load(checkpoint_path)
-        model_state_dict = checkpoint['model_state_dict']
+        # checkpoint = torch.load(checkpoint_path)
+        # model_state_dict = checkpoint['model_state_dict']
         
         # Initialize model
         model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
-        
         # Load model state dict
-        model.load_state_dict(model_state_dict)
+        modelwgts = torch.load(os.path.join(checkpoint_dir, model_weight_file))
+        # print(modelwgts)
+        model.load_state_dict(modelwgts)
+
     else:
         # If checkpoint does not exist, initialize new model
         model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
@@ -112,11 +114,17 @@ class Trainer:
             print('Epoch: ', epoch, ' | Train loss: ', tr_lossi, '| Validation loss: ', val_lossi)
 
     def _save_checkpoint(self, epoch):
-        ckp = self.model.state_dict()
-        checkpoint = {'model_state_dict': ckp}
-        PATH = checkpoint_path
-        torch.save(checkpoint, PATH)
-        print(f"Training checkpoint saved at {PATH}")
+        # ckp = self.model.state_dict()
+        # checkpoint = {'model_state_dict': ckp}
+        # PATH = checkpoint_path
+        # torch.save(checkpoint, PATH)
+        print(f"Training checkpoint saved at {checkpoint_dir}")
+        # Unwrap
+        model = accelerator.unwrap_model(self.model)
+        state_dict = model.state_dict()
+        # Use accelerator.save()
+        accelerator.save(state_dict, os.path.join(checkpoint_dir, model_weight_file))
+
 
     def train(self, max_epochs: int):
         ## Main training loop
