@@ -1,3 +1,5 @@
+##TODO: Check if weights file from CUDA training works on MPS
+##TODO: Write inference function
 ##TODO: Read directly from disk - Convert this to a file for train, validation and metadata
 ##TODO: Add DDP support for multi GPU using accelerate - makesure to calculate loss on the main process only
 ##TODO: Add a scheduler for annealing of learning rate
@@ -8,7 +10,7 @@ import torch
 import os
 from models.wiki2 import Xformer_Scratch as Xformer
 from torch.optim import Adam
-from single_gpu_config import *
+from train_config import *
 from wikiloader import Wiki2Dataset, Wiki2Dataloader
 from torch.utils.data import Dataset
 from accelerate import Accelerator
@@ -123,7 +125,7 @@ class Trainer:
         for epoch in range(max_epochs):
             self._run_epoch(epoch)
             if epoch % self.save_every == 0:
-                self._save_checkpoint(epoch)
+                self._save_checkpoint()
 
 def main(total_epochs, save_every, batch_size):
     train_dataset, val_dataset, model, optimizer = load_train_objs()
