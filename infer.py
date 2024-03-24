@@ -6,11 +6,6 @@ import torch
 from accelerate import Accelerator
 from transformers import AutoTokenizer
 from torch.nn import functional as F
-# Load model
-# Initialize model
-# Load weight
-# Load tokenizer
-# Run inference
 
 with open(dataset_file, "rb") as f:
             loaded_objects = pickle.load(f)
@@ -21,17 +16,23 @@ vocab_size, tokenized_text, _ = loaded_objects
 model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
 # print(model)
 accelerator = Accelerator()
-if os.listdir(checkpoint_dir):
+if os.listdir(os.path.join(checkpoint_dir, model_weight_file)):
     # Load model
     model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
     # Load model state dict
     modelwgts = torch.load(os.path.join(checkpoint_dir, model_weight_file), map_location=torch.device(accelerator.device.type))
-    # print(modelwgts)
+    print(f"Loading checkpoint from {checkpoint_dir}")
     model.load_state_dict(modelwgts)
     model.to(accelerator.device.type)
 
 else:
     print("Model checkpoint does not exist.")
+
+if os.listdir(tokenizer_path):
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+
+else:
+     print("Tokenizer model does not exist.")
 
 @torch.no_grad()
 def generate(model, idx, max_new_tokens, block_size=16):
@@ -53,7 +54,7 @@ def generate(model, idx, max_new_tokens, block_size=16):
     return idx.squeeze().tolist()
     
 seed = "In 1980's the video gaming was all the rage."
-tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+
 seed_tokens = tokenizer.encode(seed)#["input_ids"]
 decoded_seed = tokenizer.decode(seed_tokens)
 # print(seed_tokens, decoded_seed)
