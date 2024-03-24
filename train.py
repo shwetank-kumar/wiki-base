@@ -1,10 +1,10 @@
-##TODO: Check if weights file from CUDA training works on MPS
 ##TODO: Write inference function
+##TODO: Add a scheduler for annealing of learning rate
 ##TODO: Read directly from disk - Convert this to a file for train, validation and metadata
 ##TODO: Add DDP support for multi GPU using accelerate - makesure to calculate loss on the main process only
-##TODO: Add a scheduler for annealing of learning rate
 ##TODO: Ability to overwrite any argument from the command line
 ##TODO: Activate pin memory and shuffle
+##TODO: Bacth size calculation and GPU memory utilization in an ipynb
 import pickle
 import torch
 import os
