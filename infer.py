@@ -16,7 +16,7 @@ vocab_size, tokenized_text, _ = loaded_objects
 model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
 # print(model)
 accelerator = Accelerator()
-if os.listdir(os.path.join(checkpoint_dir, model_weight_file)):
+if os.path.join(checkpoint_dir, model_weight_file):
     # Load model
     model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
     # Load model state dict
@@ -53,12 +53,12 @@ def generate(model, idx, max_new_tokens, block_size=16):
         idx = torch.cat((idx, idx_next), dim=1)
     return idx.squeeze().tolist()
     
-seed = "In 1980's the video gaming was all the rage."
+seed = "==British Raj==="
 
 seed_tokens = tokenizer.encode(seed)#["input_ids"]
 decoded_seed = tokenizer.decode(seed_tokens)
 # print(seed_tokens, decoded_seed)
 seed_tensor = torch.unsqueeze(torch.tensor(seed_tokens, dtype=torch.long), dim=0).to(accelerator.device.type)
-generated_tokens = generate(model, seed_tensor, 32, block_size)
+generated_tokens = generate(model, seed_tensor, block_size, block_size)
 # print(generated_tokens)
 print(tokenizer.decode(generated_tokens))

@@ -1,4 +1,3 @@
-##TODO: Write inference function
 ##TODO: Add a scheduler for annealing of learning rate
 ##TODO: Read directly from disk - Convert this to a file for train, validation and metadata
 ##TODO: Add DDP support for multi GPU using accelerate - makesure to calculate loss on the main process only
@@ -10,12 +9,13 @@ import torch
 import os
 from models.wiki2 import Xformer_Scratch as Xformer
 from torch.optim import Adam
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from train_config import *
 from wikiloader import Wiki2Dataset, Wiki2Dataloader
 from torch.utils.data import Dataset
 from accelerate import Accelerator
 
-def load_train_objs():
+def load_train_objs(total_epochs):
 
     with open(dataset_file, "rb") as f:
             loaded_objects = pickle.load(f)
@@ -39,7 +39,8 @@ def load_train_objs():
     train_dataset = Wiki2Dataset(tokenized_text['train'], block_size)
     val_dataset = Wiki2Dataset(tokenized_text['validation'], block_size)
     optimizer = Adam(model.parameters(), lr=lr)
-    return train_dataset, val_dataset, model, optimizer
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=total_epochs - warmup_epochs, T_mult=1, eta_min=0)
+    return train_dataset, val_dataset, model, optimizer, scheduler
 
 def prepare_dataloader(dataset: Dataset, batch_size: int, block_size: int):
     return Wiki2Dataloader(
@@ -57,11 +58,12 @@ class Trainer:
                  train_dataloader,
                  val_dataloader,
                  optimizer: torch.optim.Optimizer,
+                 scheduler: torch.optim.lr_scheduler,
                  save_every: int,
                  batch_size: int,
                  ) -> None:
         self.save_every = save_every
-        # self.scheduler = scheduler
+        self.scheduler = scheduler
         self.optimizer = optimizer
         self.model = model
         self.train_dataloader = train_dataloader
@@ -93,6 +95,7 @@ class Trainer:
         # Backward pass and optimization
         accelerator.backward(loss)
         self.optimizer.step()
+        self.scheduler.step()
                
     def _run_epoch(self, epoch):
         losses = {"train": [], "validation": []}
@@ -109,7 +112,11 @@ class Trainer:
         losses["validation"].append(val_lossi)
         ## Print losses
         if epoch % self.save_every == 0:
-            print('Epoch: ', epoch, ' | Train loss: ', tr_lossi, '| Validation loss: ', val_lossi)
+            print('Epoch: ', epoch, 
+                  ' | Train loss: ', tr_lossi, 
+                  '| Validation loss: ', val_lossi, 
+                  '| lr:', self.scheduler.get_last_lr()[0])
+    
 
     def _save_checkpoint(self):
         print(f"Training checkpoint saved at {checkpoint_dir}")
@@ -128,12 +135,12 @@ class Trainer:
                 self._save_checkpoint()
 
 def main(total_epochs, save_every, batch_size):
-    train_dataset, val_dataset, model, optimizer = load_train_objs()
+    train_dataset, val_dataset, model, optimizer, scheduler = load_train_objs(total_epochs)
     train_dataloader = prepare_dataloader(train_dataset, batch_size, block_size)
     val_dataloader = prepare_dataloader(val_dataset, batch_size, block_size)
     # model, optimizer, training_dataloader, scheduler = accelerator.prepare(model, optimizer, training_dataloader, scheduler)
-    model, optimizer, train_dataloader, val_dataloader = accelerator.prepare(model, optimizer, train_dataloader, val_dataloader)
-    trainer = Trainer(model, train_dataloader, val_dataloader, optimizer, save_every, batch_size)
+    model, optimizer, scheduler,train_dataloader, val_dataloader = accelerator.prepare(model, optimizer, scheduler,train_dataloader, val_dataloader)
+    trainer = Trainer(model, train_dataloader, val_dataloader, optimizer, scheduler, save_every, batch_size)
     trainer.train(total_epochs)
 
 if __name__ == "__main__":
