@@ -10,8 +10,8 @@ import os
 from models.wiki2 import Xformer_Scratch as Xformer
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
-from train_config import *
-from wikiloader import Wiki2Dataset, Wiki2Dataloader
+from config import *
+from data.wiki2.wiki2loader import Wiki2Dataset, Wiki2Dataloader
 from torch.utils.data import Dataset
 from accelerate import Accelerator
 
