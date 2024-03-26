@@ -1,5 +1,5 @@
 from models.wiki2 import Xformer_Scratch as Xformer
-from infer_config import * 
+from config import * 
 import pickle
 import os
 import torch
@@ -11,7 +11,7 @@ with open(dataset_file, "rb") as f:
             loaded_objects = pickle.load(f)
 
 # Unpack the tuple of objects
-vocab_size, tokenized_text, _ = loaded_objects
+vocab_size, tokenized_text = loaded_objects
 
 model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
 # print(model)
@@ -53,7 +53,7 @@ def generate(model, idx, max_new_tokens, block_size=16):
         idx = torch.cat((idx, idx_next), dim=1)
     return idx.squeeze().tolist()
     
-seed = "==British Raj==="
+seed = "It was a dark morning"
 
 seed_tokens = tokenizer.encode(seed)#["input_ids"]
 decoded_seed = tokenizer.decode(seed_tokens)

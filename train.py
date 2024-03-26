@@ -1,4 +1,4 @@
-##TODO: Add a scheduler for annealing of learning rate
+##TODO: Update transformer sizing notebook
 ##TODO: Read directly from disk - Convert this to a file for train, validation and metadata
 ##TODO: Add DDP support for multi GPU using accelerate - makesure to calculate loss on the main process only
 ##TODO: Ability to overwrite any argument from the command line
@@ -21,9 +21,9 @@ def load_train_objs(total_epochs):
             loaded_objects = pickle.load(f)
 
     # Unpack the tuple of objects
-    vocab_size, tokenized_text, _ = loaded_objects
+    vocab_size, tokenized_text = loaded_objects
     
-    if os.listdir(checkpoint_dir):
+    if os.path.exists(os.path.join(checkpoint_dir, model_weight_file)):
         # Initialize model
         model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
         # Load model state dict
@@ -34,6 +34,10 @@ def load_train_objs(total_epochs):
     else:
         # If checkpoint does not exist, initialize new model
         model = Xformer(emb_dim, vocab_size, num_heads, num_layers, block_size, dropout)
+
+    # Calculate model size
+    model_size = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Model size: {model_size} parameters")
 
     # dataset = tokenized_text
     train_dataset = Wiki2Dataset(tokenized_text['train'], block_size)
