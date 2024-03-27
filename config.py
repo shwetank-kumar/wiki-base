@@ -1,15 +1,15 @@
 ## File paths
 ## Wiki2
-# dataset_file = "./data/wiki2/wiki2tokens.bin"
-# tokenizer_path = "./data/wiki2/wiki2tokenizer"                
-# checkpoint_dir = "./models/checkpoints/wiki2"
-# model_weight_file = "weights.pkl"
+dataset_file = "./data/wiki2/wiki2tokens.bin"
+tokenizer_path = "./data/wiki2/wiki2tokenizer"                
+checkpoint_dir = "./models/checkpoints/wiki2"
+model_weight_file = "weights.pkl"
 
 ## Shakespeare
-dataset_file = "./data/shakespeare/shakespearetokens.bin"
-tokenizer_path = "./data/shakespeare/shakespearetokenizer"                
-checkpoint_dir = "./models/checkpoints/shakespeare"
-model_weight_file = "weights.pkl"
+# dataset_file = "./data/shakespeare/shakespearetokens.bin"
+# tokenizer_path = "./data/shakespeare/shakespearetokenizer"                
+# checkpoint_dir = "./models/checkpoints/shakespeare"
+# model_weight_file = "weights.pkl"
 
 
 ## Network params

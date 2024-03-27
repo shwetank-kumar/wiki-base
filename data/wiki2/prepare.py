@@ -59,4 +59,4 @@ if __name__ == '__main__':
 
     # Save tokens and tokenized dataset object to a .bin file (raw_tokens:dict, tokens: Dataset)
     with open(tokens_path, "wb") as f:
-        pickle.dump((vocab_size, tokens, tokenized_dataset), f)
+        pickle.dump((vocab_size, tokens), f)
