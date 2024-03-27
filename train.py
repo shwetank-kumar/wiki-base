@@ -11,8 +11,7 @@ from models.wiki2 import Xformer_Scratch as Xformer
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from config import *
-# from data.wiki2.wiki2loader import Wiki2Dataset, Wiki2Dataloader
-from data.shakespeare.shakespeareloader import ShakespeareDataset, ShakespeareDataloader
+from data.TokensData import TokensDataset, TokensDataloader
 from torch.utils.data import Dataset
 from accelerate import Accelerator
 
@@ -41,23 +40,14 @@ def load_train_objs(total_epochs):
     print(f"Model size: {model_size} parameters")
 
     # dataset = tokenized_text
-    # train_dataset = Wiki2Dataset(tokenized_text['train'], block_size)
-    # val_dataset = Wiki2Dataset(tokenized_text['validation'], block_size)
-    train_dataset = ShakespeareDataset(tokenized_text['train'], block_size)
-    val_dataset = ShakespeareDataset(tokenized_text['validation'], block_size)
+    train_dataset = TokensDataset(tokenized_text['train'], block_size)
+    val_dataset = TokensDataset(tokenized_text['validation'], block_size)
     optimizer = Adam(model.parameters(), lr=lr)
     scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=total_epochs - warmup_epochs, T_mult=1, eta_min=0)
     return train_dataset, val_dataset, model, optimizer, scheduler
 
 def prepare_dataloader(dataset: Dataset, batch_size: int, block_size: int):
-    # return Wiki2Dataloader(
-    #     dataset,
-    #     batch_size=batch_size,
-    #     block_size=block_size,
-    #     pin_memory=True,
-    #     shuffle=True
-    # )
-    return ShakespeareDataloader(
+    return TokensDataloader(
         dataset,
         batch_size=batch_size,
         block_size=block_size,

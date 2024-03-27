@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-class Wiki2Dataset(Dataset):
+class TokensDataset(Dataset):
     def __init__(self, dataset, block_size):
         self.dataset = dataset
         self.block_size = block_size
@@ -15,7 +15,7 @@ class Wiki2Dataset(Dataset):
         return x, y
 
 
-class Wiki2Dataloader(DataLoader):
+class TokensDataloader(DataLoader):
     def __init__(self, dataset, batch_size, block_size, *args, **kwargs):
        super().__init__(dataset, batch_size=batch_size, *args, **kwargs)
        self.block_size = block_size
