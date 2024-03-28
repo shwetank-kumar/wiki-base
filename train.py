@@ -1,3 +1,4 @@
+##TODO: Try with character level tokeniser
 ##TODO: Update transformer sizing notebook
 ##TODO: Read directly from disk - Convert this to a file for train, validation and metadata
 ##TODO: Add DDP support for multi GPU using accelerate - makesure to calculate loss on the main process only
@@ -9,13 +10,15 @@ import torch
 import os
 from models.wiki2 import Xformer_Scratch as Xformer
 from torch.optim import Adam
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, ConstantLR
 from config import *
 from data.TokensData import TokensDataset, TokensDataloader
 from torch.utils.data import Dataset
 from accelerate import Accelerator
 
-def load_train_objs(total_epochs):
+from torch.utils.tensorboard import SummaryWriter
+
+def load_train_objs(total_epochs, warmup_epochs):
 
     with open(dataset_file, "rb") as f:
             loaded_objects = pickle.load(f)
@@ -43,7 +46,8 @@ def load_train_objs(total_epochs):
     train_dataset = TokensDataset(tokenized_text['train'], block_size)
     val_dataset = TokensDataset(tokenized_text['validation'], block_size)
     optimizer = Adam(model.parameters(), lr=lr)
-    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=total_epochs - warmup_epochs, T_mult=1, eta_min=0)
+    # scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=total_epochs - warmup_epochs, T_mult=1, eta_min=0)
+    scheduler = ConstantLR(optimizer, lr, 1.0)
     return train_dataset, val_dataset, model, optimizer, scheduler
 
 def prepare_dataloader(dataset: Dataset, batch_size: int, block_size: int):
@@ -65,6 +69,7 @@ class Trainer:
                  scheduler: torch.optim.lr_scheduler,
                  save_every: int,
                  batch_size: int,
+                 writer: SummaryWriter = None,
                  ) -> None:
         self.save_every = save_every
         self.scheduler = scheduler
@@ -73,6 +78,7 @@ class Trainer:
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
         self.batch_size = batch_size
+        self.writer = SummaryWriter(tensorboard_dir) if writer is None else writer
     
     @torch.inference_mode()
     def _evaluate_loss(self, eval_batch, num_batches = 8):
@@ -106,7 +112,6 @@ class Trainer:
         
         xtr, ytr = next(iter(self.train_dataloader))
         xval, yval = next(iter(self.val_dataloader))
-        
         ## Train 1 batch
         self._run_batch(xtr, ytr)
         
@@ -114,6 +119,11 @@ class Trainer:
         tr_lossi, val_lossi = self._evaluate_loss({'train': (xtr, ytr), 'validation': (xval, yval)}, num_batches=eval_batch_size)
         losses["train"].append(tr_lossi)
         losses["validation"].append(val_lossi)
+
+        # Log the losses to TensorBoard
+        self.writer.add_scalar('Loss/train', tr_lossi, epoch)
+        self.writer.add_scalar('Loss/validation', val_lossi, epoch)
+
         ## Print losses
         if epoch % self.save_every == 0:
             print('Epoch: ', epoch, 
@@ -138,24 +148,35 @@ class Trainer:
             if epoch % self.save_every == 0:
                 self._save_checkpoint()
 
-def main(total_epochs, save_every, batch_size):
-    train_dataset, val_dataset, model, optimizer, scheduler = load_train_objs(total_epochs)
+
+def main(total_epochs, save_every, warmup_epochs, batch_size):
+    os.makedirs(tensorboard_dir, exist_ok=True)
+    writer = SummaryWriter(tensorboard_dir)
+
+    train_dataset, val_dataset, model, optimizer, scheduler = load_train_objs(total_epochs, warmup_epochs)
     train_dataloader = prepare_dataloader(train_dataset, batch_size, block_size)
     val_dataloader = prepare_dataloader(val_dataset, batch_size, block_size)
     # model, optimizer, training_dataloader, scheduler = accelerator.prepare(model, optimizer, training_dataloader, scheduler)
     model, optimizer, scheduler,train_dataloader, val_dataloader = accelerator.prepare(model, optimizer, scheduler,train_dataloader, val_dataloader)
-    trainer = Trainer(model, train_dataloader, val_dataloader, optimizer, scheduler, save_every, batch_size)
+    trainer = Trainer(model, train_dataloader, val_dataloader, optimizer, scheduler, save_every, batch_size, writer)
     trainer.train(total_epochs)
+    
+    # Flush the SummaryWriter to ensure all events are written
+    writer.flush()
+
+    # Close the SummaryWriter
+    writer.close()
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='simple distributed training job')
     parser.add_argument('total_epochs', type=int, help='Total epochs to train the model')
     parser.add_argument('save_every', type=int, help='How often to save a snapshot')
+    parser.add_argument('warmup_epochs', type=int, help='Epochs used for warming up learning rate')
     # parser.add_argument('--batch_size', default=32, type=int, help='Input batch size on each device (default: 32)')
     args = parser.parse_args()
 
     accelerator = Accelerator()
     device = accelerator.device
     print("Device type being used by Hugging Face Accelerate:", device)
-    main(args.total_epochs, args.save_every, batch_size)
+    main(args.total_epochs, args.save_every, args.warmup_epochs, batch_size)

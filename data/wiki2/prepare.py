@@ -23,7 +23,7 @@ splits = dataset.keys()
 ## Function to finetune a tokenizer from based on the dataset 
 ## Train a new tokenizer using Wiki dataset from GPT2 tokenizer
 batch_size = 1000
-vocab_size = 25000
+vocab_size = 5000
 num_proc = 6 ## num cpu cores // 2
 
 def batch_iterator(splits):
