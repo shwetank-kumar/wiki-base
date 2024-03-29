@@ -1,0 +1,41 @@
+{
+    "os": "macOS-14.4-arm64-arm-64bit",
+    "python": "3.11.8",
+    "heartbeatAt": "2024-03-29T17:01:19.747170",
+    "startedAt": "2024-03-29T17:01:19.400097",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "500",
+        "10",
+        "10"
+    ],
+    "state": "running",
+    "program": "/Users/shwetank/code/wiki-base/train.py",
+    "codePathLocal": "train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "https://github.com/shwetank-kumar/wiki-base.git",
+        "commit": "82e983e44e4c68844164f98014fe0e3dcdbcab6b"
+    },
+    "email": "shwetank.kumar@gmail.com",
+    "root": "/Users/shwetank/code/wiki-base",
+    "host": "shwetanks-mbp.lan",
+    "username": "shwetank",
+    "executable": "/Users/shwetank/code/wiki-base/makemore11/bin/python",
+    "cpu_count": 12,
+    "cpu_count_logical": 12,
+    "disk": {
+        "/": {
+            "total": 460.4317207336426,
+            "used": 96.41245651245117
+        }
+    },
+    "gpuapple": {
+        "type": "arm",
+        "vendor": "Apple"
+    },
+    "memory": {
+        "total": 18.0
+    }
+}

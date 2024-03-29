@@ -1,0 +1,81 @@
+
+Model size: 10716353 parameters
+Epoch:  0  | Train loss:  1.4493273496627808 | Validation loss:  1.590537190437317 | lr: 0.0001
+Training checkpoint saved at ./models/checkpoints/shakespeare_char
+Epoch:  10  | Train loss:  1.517353892326355 | Validation loss:  1.6299477815628052 | lr: 0.0001
+Training checkpoint saved at ./models/checkpoints/shakespeare_char
+Epoch:  20  | Train loss:  1.4535374641418457 | Validation loss:  1.6086349487304688 | lr: 0.0001
+Training checkpoint saved at ./models/checkpoints/shakespeare_char
+Epoch:  30  | Train loss:  1.4715232849121094 | Validation loss:  1.603094220161438 | lr: 0.0001
+Training checkpoint saved at ./models/checkpoints/shakespeare_char
+Epoch:  40  | Train loss:  1.4484241008758545 | Validation loss:  1.6231547594070435 | lr: 0.0001
+Training checkpoint saved at ./models/checkpoints/shakespeare_char
+Epoch:  50  | Train loss:  1.44957435131073 | Validation loss:  1.586685299873352 | lr: 0.0001
+Training checkpoint saved at ./models/checkpoints/shakespeare_char
+Epoch:  60  | Train loss:  1.4647053480148315 | Validation loss:  1.6106154918670654 | lr: 0.0001
+Training checkpoint saved at ./models/checkpoints/shakespeare_char
+Epoch:  70  | Train loss:  1.4619370698928833 | Validation loss:  1.6037665605545044 | lr: 0.0001
+Training checkpoint saved at ./models/checkpoints/shakespeare_char
+Traceback (most recent call last):
+  File "/Users/shwetank/code/wiki-base/train.py", line 191, in <module>
+    main(args.total_epochs, args.save_every, args.warmup_epochs, batch_size)
+  File "/Users/shwetank/code/wiki-base/train.py", line 171, in main
+    trainer.train(total_epochs)
+  File "/Users/shwetank/code/wiki-base/train.py", line 154, in train
+    self._run_epoch(epoch)
+  File "/Users/shwetank/code/wiki-base/train.py", line 116, in _run_epoch
+    self._run_batch(xtr, ytr)
+  File "/Users/shwetank/code/wiki-base/train.py", line 104, in _run_batch
+    _, loss = self.model(xtr, ytr)
+      ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/models/wiki2.py", line 86, in forward
+    x = self.blocks(x)
+        ^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/container.py", line 217, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/models/wiki2.py", line 66, in forward
+    sa_out = self.sa_head(self.ln1(x))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/models/wiki2.py", line 51, in forward
+    x = torch.cat([h(x) for h in self.heads], dim=-1)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/models/wiki2.py", line 51, in <listcomp>
+    x = torch.cat([h(x) for h in self.heads], dim=-1)
+                   ^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/models/wiki2.py", line 37, in forward
+    wei = torch.masked_fill(wei, self.tril[:T,:T] == 0, float('-Inf')) # Only selecting till the Tth column will be esp important during generation o/w will expect maxx_length columns at everytime step and throw an error
+                                 ^^^^^^^^^
+  File "/Users/shwetank/code/wiki-base/makemore11/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1675, in __getattr__
+    def __getattr__(self, name: str) -> Any:
+KeyboardInterrupt
