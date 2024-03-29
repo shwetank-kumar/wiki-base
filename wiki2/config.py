@@ -4,7 +4,7 @@ import os
 project_name = "wiki2"
 dataset_file = "./data/wiki2tokens.bin"
 tokenizer_path = "./data/wiki2tokenizer"                
-checkpoint_dir = "./models/checkpoints/wiki2"
+checkpoint_dir = "./models/checkpoints"
 model_weight_file = "weights.pkl"
 
 ## Network params
