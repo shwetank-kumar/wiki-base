@@ -14,6 +14,7 @@ import os
 # model_weight_file = "weights.pkl"
 
 ## Shakespeare
+project_name = "shakespeare_char"
 dataset_file = "./data/shakespeare_char/shakespeare_char_tokens.bin"
 tokenizer_path = "./data/shakespeare_char/shakespeare_char_tokenizer"                
 checkpoint_dir = "./models/checkpoints/shakespeare_char"
@@ -27,9 +28,21 @@ num_heads = 6
 dropout = 0.2
 
 ## Training parameters 
-lr = 0.3e-3
+lr = 0.1e-3
 eval_batch_size = 8
 batch_size = 128
 
 # Create a SummaryWriter instance
 tensorboard_dir = os.path.join(checkpoint_dir, 'tensorboard')
+
+# Setup wandb config
+import wandb
+
+# Define a config dictionary object
+wandb_config = {
+    "block_size": block_size,
+    "emb_dim": emb_dim,
+    "num_layers": num_layers,
+    "num_heads": num_heads,
+    "dropout": 0.2,
+}
