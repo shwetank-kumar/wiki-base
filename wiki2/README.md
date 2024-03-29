@@ -1,0 +1,1 @@
+Training on Wiki2 text using decoder only transformer with a GPT2 like tokenizer but fine tuned on the actual dataset used for training and testing. 
