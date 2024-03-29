@@ -1,0 +1,1 @@
+Training on Shakespeare text using decoder only transformer with a GPT2 like tokenizer but fine tuned on the actual dataset used for training and testing. Over shoot optimal training significantly with train loss at ~1.2 and val loss ~5.22. The lowest val loss was ~4.5 (from memory). Next things to do would be mitigate with either more data or regularization.

@@ -1,0 +1,1 @@
+Training on Shakespeare text using decoder only transformer with a simple Character only Tokenizer. Gets close to Karpathy's ~1.49 (we get to ~1.59) validation loss with room to get better. 
