@@ -97,39 +97,3 @@ if __name__ == '__main__':
     # # Save tokens and tokenized dataset object to a .bin file (raw_tokens:dict, tokens: Dataset)
     with open(tokens_path, "wb") as f:
         pickle.dump((vocab_size, tokenized_dataset), f)
-
-
-
-
-## Function to finetune a tokenizer from based on the dataset 
-## Train a new tokenizer using Wiki dataset from GPT2 tokenizer
-# batch_size = 1000
-# vocab_size = 5000
-# num_proc = 6 ## num cpu cores // 2
-
-# def batch_iterator(splits):
-#     for split in splits:
-#         for i in range(0, len(dataset[split]), batch_size):
-#             yield dataset[split][i : i + batch_size]
-
-# def tune_tokenizer():
-#     gpt2_tokenizer = AutoTokenizer.from_pretrained("gpt2")
-#     print(gpt2_tokenizer.is_fast)
-#     tokenizer = gpt2_tokenizer.train_new_from_iterator(batch_iterator(splits), vocab_size=25000)
-#     return tokenizer
-
-# def batch_tokenize(dataset, tokenizer, batch_size=1024):
-#     tokenized_dataset = {}
-#     for key, examples in dataset.items():
-#         # Initialize the list for tokenized examples under the current key
-#         tokenized_dataset[key] = []
-#         for i in range(0, len(examples), batch_size):
-#             # Create batches of examples
-#             batch = examples[i:i+batch_size]
-#             # Tokenize the batch and extend the list of tokenized examples
-#             tokenized_batch = tokenizer.encode(batch, add_special_tokens=True)
-#             tokenized_dataset[key].extend(tokenized_batch)
-#     return tokenized_dataset
-
-
-

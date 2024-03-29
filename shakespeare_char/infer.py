@@ -1,4 +1,4 @@
-from models.wiki2 import Xformer_Scratch as Xformer
+from models.decoder import Xformer_Scratch as Xformer
 from config import * 
 import pickle
 import os
@@ -28,6 +28,7 @@ if os.path.join(checkpoint_dir, model_weight_file):
 else:
     print("Model checkpoint does not exist.")
 
+print(tokenizer_path)
 if os.listdir(tokenizer_path):
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 

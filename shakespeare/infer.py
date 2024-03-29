@@ -1,4 +1,4 @@
-from models.wiki2 import Xformer_Scratch as Xformer
+from models.decoder import Xformer_Scratch as Xformer
 from config import * 
 import pickle
 import os
