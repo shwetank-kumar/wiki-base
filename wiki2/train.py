@@ -53,7 +53,6 @@ def prepare_dataloader(dataset: Dataset):
         batch_size=batch_size,
         block_size=block_size,
         pin_memory=True,
-        shuffle=True
     )
 
 
@@ -94,9 +93,7 @@ class Trainer:
     def _run_batch(self, xtr, ytr):
         # Forward pass
         self.optimizer.zero_grad(set_to_none=True)
-        print(xtr.shape)
-        print(ytr.shape)
-        _, loss = self.model(xtr, ytr)        
+        _, loss = self.model(xtr, ytr)    
         # Backward pass and optimization
         accelerator.backward(loss)
         self.optimizer.step()
@@ -107,6 +104,7 @@ class Trainer:
         
         xtr, ytr = next(iter(self.train_dataloader))
         xval, yval = next(iter(self.val_dataloader))
+        print('here',xtr.shape, ytr.shape)
         ## Train 1 batch
         self._run_batch(xtr, ytr)
         
@@ -154,6 +152,8 @@ def main(total_epochs, save_every, warmup_epochs):
     train_dataset, val_dataset, model, optimizer, scheduler = load_train_objs(total_epochs, warmup_epochs)
     train_dataloader = prepare_dataloader(train_dataset)
     val_dataloader = prepare_dataloader(val_dataset)
+    # tx, ty = next(iter(train_dataloader))
+    # print(tx.shape)
     # model, optimizer, training_dataloader, scheduler = accelerator.prepare(model, optimizer, training_dataloader, scheduler)
     model, optimizer, scheduler,train_dataloader, val_dataloader = accelerator.prepare(model, optimizer, scheduler,train_dataloader, val_dataloader)
     trainer = Trainer(model, train_dataloader, val_dataloader, optimizer, scheduler, save_every)
