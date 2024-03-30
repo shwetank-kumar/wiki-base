@@ -34,7 +34,7 @@ def batch_iterator(splits):
 def tune_tokenizer():
     gpt2_tokenizer = AutoTokenizer.from_pretrained("gpt2")
     print(gpt2_tokenizer.is_fast)
-    tokenizer = gpt2_tokenizer.train_new_from_iterator(batch_iterator(splits), vocab_size=25000)
+    tokenizer = gpt2_tokenizer.train_new_from_iterator(batch_iterator(splits), vocab_size=vocab_size)
     return tokenizer
 
 def tokenize(example):

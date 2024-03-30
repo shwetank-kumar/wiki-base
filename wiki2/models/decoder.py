@@ -71,8 +71,9 @@ class BlockScratch(nn.Module):
 class Xformer_Scratch(nn.Module):
     def __init__(self, emb_dim, vocab_size, num_heads, num_layers, block_length, dropout):
         super().__init__()
-        self.token_embedding = nn.Embedding(vocab_size + 1, emb_dim)
-        self.pos_embedding = nn.Embedding(vocab_size + 1, emb_dim)
+        self.token_embedding = nn.Embedding(vocab_size, emb_dim)
+        self.pos_embedding = nn.Embedding(vocab_size, emb_dim)
+        print(self.token_embedding)
         blocks = [BlockScratch(emb_dim, num_heads, block_length, dropout) for _ in range(num_layers)]
         blocks.append(nn.LayerNorm(emb_dim))
         

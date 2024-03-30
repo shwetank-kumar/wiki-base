@@ -93,6 +93,8 @@ class Trainer:
     def _run_batch(self, xtr, ytr):
         # Forward pass
         self.optimizer.zero_grad(set_to_none=True)
+        max_values, _ = torch.max(xtr, dim=1)
+        print(max_values)
         _, loss = self.model(xtr, ytr)    
         # Backward pass and optimization
         accelerator.backward(loss)
@@ -112,13 +114,13 @@ class Trainer:
         tr_lossi, val_lossi = self._evaluate_loss({'train': (xtr, ytr), 'validation': (xval, yval)}, num_batches=eval_batch_size)
         losses["train"].append(tr_lossi)
         losses["validation"].append(val_lossi)
-        wandb.log(
-            {
-                "epoch": epoch,
-                "train_loss": tr_lossi,
-                "val_loss": val_lossi,
-            }
-        )
+        # wandb.log(
+        #     {
+        #         "epoch": epoch,
+        #         "train_loss": tr_lossi,
+        #         "val_loss": val_lossi,
+        #     }
+        # )
 
         ## Print losses
         if epoch % self.save_every == 0:
@@ -147,7 +149,7 @@ class Trainer:
 
 def main(total_epochs, save_every, warmup_epochs):
     # Pass the config dictionary when you initialize W&B
-    run = wandb.init(project=project_name, config=wandb_config)
+    # run = wandb.init(project=project_name, config=wandb_config)
 
     train_dataset, val_dataset, model, optimizer, scheduler = load_train_objs(total_epochs, warmup_epochs)
     train_dataloader = prepare_dataloader(train_dataset)
