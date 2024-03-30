@@ -14,7 +14,6 @@ from config import *
 from dataloaders import TokensDataset, TokensDataloader
 from torch.utils.data import Dataset
 from accelerate import Accelerator
-import importlib
 
 def load_train_objs(total_epochs, warmup_epochs):
 
@@ -48,7 +47,7 @@ def load_train_objs(total_epochs, warmup_epochs):
     scheduler = ConstantLR(optimizer, lr, 1.0)
     return train_dataset, val_dataset, model, optimizer, scheduler
 
-def prepare_dataloader(dataset: Dataset, batch_size: int, block_size: int):
+def prepare_dataloader(dataset: Dataset):
     return TokensDataloader(
         dataset,
         batch_size=batch_size,
@@ -66,7 +65,6 @@ class Trainer:
                  optimizer: torch.optim.Optimizer,
                  scheduler: torch.optim.lr_scheduler,
                  save_every: int,
-                 batch_size: int,
                  ) -> None:
         self.save_every = save_every
         self.scheduler = scheduler
@@ -74,7 +72,6 @@ class Trainer:
         self.model = model
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
-        self.batch_size = batch_size
     
     @torch.inference_mode()
     def _evaluate_loss(self, eval_batch, num_batches = 8):
@@ -97,6 +94,8 @@ class Trainer:
     def _run_batch(self, xtr, ytr):
         # Forward pass
         self.optimizer.zero_grad(set_to_none=True)
+        print(xtr.shape)
+        print(ytr.shape)
         _, loss = self.model(xtr, ytr)        
         # Backward pass and optimization
         accelerator.backward(loss)
@@ -148,18 +147,18 @@ class Trainer:
                 self._save_checkpoint()
 
 
-def main(total_epochs, save_every, warmup_epochs, batch_size):
+def main(total_epochs, save_every, warmup_epochs):
     # Pass the config dictionary when you initialize W&B
     run = wandb.init(project=project_name, config=wandb_config)
 
     train_dataset, val_dataset, model, optimizer, scheduler = load_train_objs(total_epochs, warmup_epochs)
-    train_dataloader = prepare_dataloader(train_dataset, batch_size, block_size)
-    val_dataloader = prepare_dataloader(val_dataset, batch_size, block_size)
+    train_dataloader = prepare_dataloader(train_dataset)
+    val_dataloader = prepare_dataloader(val_dataset)
     # model, optimizer, training_dataloader, scheduler = accelerator.prepare(model, optimizer, training_dataloader, scheduler)
     model, optimizer, scheduler,train_dataloader, val_dataloader = accelerator.prepare(model, optimizer, scheduler,train_dataloader, val_dataloader)
-    trainer = Trainer(model, train_dataloader, val_dataloader, optimizer, scheduler, save_every, batch_size)
+    trainer = Trainer(model, train_dataloader, val_dataloader, optimizer, scheduler, save_every)
     trainer.train(total_epochs)
-
+    
 if __name__ == "__main__":
     import argparse, sys
     parser = argparse.ArgumentParser(description='simple distributed training job')
@@ -171,4 +170,4 @@ if __name__ == "__main__":
     accelerator = Accelerator()
     device = accelerator.device
     print("Device type being used by Hugging Face Accelerate:", device)
-    main(args.total_epochs, args.save_every, args.warmup_epochs, batch_size)
+    main(args.total_epochs, args.save_every, args.warmup_epochs)
