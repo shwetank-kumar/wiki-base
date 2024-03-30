@@ -94,8 +94,6 @@ class Trainer:
     def _run_batch(self, xtr, ytr):
         # Forward pass
         self.optimizer.zero_grad(set_to_none=True)
-        print(xtr.shape)
-        print(ytr.shape)
         _, loss = self.model(xtr, ytr)        
         # Backward pass and optimization
         accelerator.backward(loss)
