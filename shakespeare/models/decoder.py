@@ -22,9 +22,6 @@ class Head(nn.Module):
         self.key = nn.Linear(emb_dim, head_size, bias=False)
         self.query = nn.Linear(emb_dim, head_size, bias=False)
         self.value = nn.Linear(emb_dim, head_size, bias=False)
-        # Define a register buffer
-        self.register_buffer('tril', torch.tril(torch.ones(block_length,block_length)))
-        # Dropout
         self.dropout = dropout
 
     def forward(self, x):
