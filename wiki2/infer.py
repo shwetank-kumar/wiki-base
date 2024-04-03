@@ -53,7 +53,7 @@ def generate(model, idx, max_new_tokens, block_size=16):
         idx = torch.cat((idx, idx_next), dim=1)
     return idx.squeeze().tolist()
     
-seed = "Art in America"
+seed = "The phrase - Morning in America - "
 
 seed_tokens = tokenizer.encode(seed)#["input_ids"]
 decoded_seed = tokenizer.decode(seed_tokens)
