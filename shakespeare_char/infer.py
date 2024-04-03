@@ -4,7 +4,7 @@ import pickle
 import os
 import torch
 from accelerate import Accelerator
-from transformers import AutoTokenizer
+from data.chartokenizer import CharTokenizer
 from torch.nn import functional as F
 
 with open(dataset_file, "rb") as f:
@@ -29,11 +29,17 @@ else:
     print("Model checkpoint does not exist.")
 
 print(tokenizer_path)
-if os.listdir(tokenizer_path):
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+# if os.listdir(tokenizer_path):
+#     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+if os.path.exists(os.path.join(tokenizer_path, 'vocab.txt')):
+    with open(os.path.join(tokenizer_path, 'vocab.txt'), "rb") as f:
+        vocab = pickle.load(f)
+    # print(vocab)
 
 else:
      print("Tokenizer model does not exist.")
+
+tokenizer = CharTokenizer(vocab)
 
 @torch.no_grad()
 def generate(model, idx, max_new_tokens, block_size=16):

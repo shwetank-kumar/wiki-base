@@ -25,19 +25,15 @@ class Head(nn.Module):
         # Define a register buffer
         self.register_buffer('tril', torch.tril(torch.ones(block_length,block_length)))
         # Dropout
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = dropout
 
     def forward(self, x):
-        B, T, C = x.shape
+        ## Using flash attention kernel
         ## Initialize the vector
         k = self.key(x) # B,T,head_size
         q = self.query(x) # B,T,head_size
         v = self.value(x) # B,T,head_size
-        wei = k @ torch.transpose(q, 1, 2) * C**-0.5 # B,T,head_size * B,head_size,T -> B,T,T
-        wei = torch.masked_fill(wei, self.tril[:T,:T] == 0, float('-Inf')) # Only selecting till the Tth column will be esp important during generation o/w will expect maxx_length columns at everytime step and throw an error
-        wei = self.dropout(F.softmax(wei, dim=-1)) # B,T,T
-        # print(k.shape, q.shape, v.shape, wei.shape)
-        out = wei @ v #B,T,T * B,T,H -> B,T,H i.e. 32,16,16 * 32,16,8 -> 32,16,8
+        out = F.scaled_dot_product_attention(q, k, v, attn_mask=None, dropout_p=self.dropout, is_causal=True)
         return out
     
 class MultiHeadAttentionModuleList(nn.Module):

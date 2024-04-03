@@ -9,13 +9,13 @@ import torch
 import os
 from models.decoder import Xformer_Scratch as Xformer
 from torch.optim import Adam
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, ConstantLR
+from torch.optim.lr_scheduler import ConstantLR
 from config import *
 from dataloaders import TokensDataset, TokensDataloader
 from torch.utils.data import Dataset
 from accelerate import Accelerator
 
-def load_train_objs(total_epochs, warmup_epochs):
+def load_train_objs():
 
     with open(dataset_file, "rb") as f:
             loaded_objects = pickle.load(f)
@@ -145,11 +145,11 @@ class Trainer:
                 self._save_checkpoint()
 
 
-def main(total_epochs, save_every, warmup_epochs):
+def main(total_epochs, save_every):
     # Pass the config dictionary when you initialize W&B
     run = wandb.init(project=project_name, config=wandb_config)
 
-    train_dataset, val_dataset, model, optimizer, scheduler = load_train_objs(total_epochs, warmup_epochs)
+    train_dataset, val_dataset, model, optimizer, scheduler = load_train_objs()
     train_dataloader = prepare_dataloader(train_dataset)
     val_dataloader = prepare_dataloader(val_dataset)
     # model, optimizer, training_dataloader, scheduler = accelerator.prepare(model, optimizer, training_dataloader, scheduler)
@@ -158,14 +158,14 @@ def main(total_epochs, save_every, warmup_epochs):
     trainer.train(total_epochs)
     
 if __name__ == "__main__":
-    import argparse, sys
+    import argparse
     parser = argparse.ArgumentParser(description='simple distributed training job')
     parser.add_argument('total_epochs', type=int, help='Total epochs to train the model')
     parser.add_argument('save_every', type=int, help='How often to save a snapshot')
-    parser.add_argument('warmup_epochs', type=int, help='Epochs used for warming up learning rate')
+    # parser.add_argument('warmup_epochs', type=int, help='Epochs used for warming up learning rate')
     args = parser.parse_args()
 
     accelerator = Accelerator()
     device = accelerator.device
     print("Device type being used by Hugging Face Accelerate:", device)
-    main(args.total_epochs, args.save_every, args.warmup_epochs)
+    main(args.total_epochs, args.save_every)
