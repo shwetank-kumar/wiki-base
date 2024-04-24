@@ -112,13 +112,13 @@ class Trainer:
         tr_lossi, val_lossi = self._evaluate_loss({'train': (xtr, ytr), 'validation': (xval, yval)}, num_batches=eval_batch_size)
         losses["train"].append(tr_lossi)
         losses["validation"].append(val_lossi)
-        wandb.log(
-            {
-                "epoch": epoch,
-                "train_loss": tr_lossi,
-                "val_loss": val_lossi,
-            }
-        )
+        # wandb.log(
+        #     {
+        #         "epoch": epoch,
+        #         "train_loss": tr_lossi,
+        #         "val_loss": val_lossi,
+        #     }
+        # )
 
         ## Print losses
         if epoch % self.save_every == 0:
@@ -147,7 +147,7 @@ class Trainer:
 
 def main(total_epochs, save_every):
     # Pass the config dictionary when you initialize W&B
-    run = wandb.init(project=project_name, config=wandb_config)
+    # run = wandb.init(project=project_name, config=wandb_config)
 
     train_dataset, val_dataset, model, optimizer, scheduler = load_train_objs()
     train_dataloader = prepare_dataloader(train_dataset)

@@ -5,7 +5,7 @@ project_name = "shakespeare_char"
 dataset_file = "./data/shakespearetokens.bin"
 tokenizer_path = "./data/shakespearetokenizer"                
 checkpoint_dir = "./models/checkpoints"
-model_weight_file = "weights.pkl"
+model_weight_file = "weights_2024_04_24.pkl"
 
 ## Network params
 block_size = 256
